@@ -1,0 +1,11 @@
+disabled_rules:
+  - trailing_whitespace
+  - force_cast
+
+line_length: 300
+
+variable_name:
+    min_length: 1
+
+    type_name:
+      min_length: 1
