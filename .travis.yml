@@ -1,6 +1,7 @@
 language: objective-c
 before_install:
   - brew update
+  - brew unlink swiftlint
   - brew install swiftlint
 script:
   - swiftlint
