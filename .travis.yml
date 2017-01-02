@@ -5,7 +5,7 @@ before_install:
 script:
   - swiftlint
   - make clean build test
-osx_image: xcode7.3
+osx_image: xcode8
 notifications:
   slack:
     secure: e5NpN5rhag269jbEihcXarDVzCfrcS/v5vsnGL1mx6SDqFXJVikWFTnADvkKLvqW/KSYs7kdRUAF5LR8+bdQTrgv2nJmdUMQFwBL5ZO0wbjZg0ugSjnz1RIjALfNOBHmVSfNrSxWQpJtXQTWcPGbMRLMTz1+TfxJuSQVzCd2o2PORTM5RrNka3fptT2GKcIm/lnC+SwbdLZbLAHzC11Smt5U0WRd52lyutv2zCHVM/wZOl71xWEEwGdcsDAQaOtD7C9A8+fh1F88Eikj2bsfW8e6eJDbHvBM6A3KYM+yttme/uEKuyzdW5zy+FzObVfq+YETvf0yZFn+UA1tQB3zveLrmmh2e3gWyYP1bXmDTggRnhA7J50DXk9wsluS+NVhuT/noRVMjbirP7kYfiLcAVsA2WNoFD1B+oXr5/CuzXIq8Z3ArJFZYwSQwTY6HhCKjEX2njznReGG+SN067r5Jg3+KjNG7/FIyM0Lt77RVeuUKUafPEBVt5cF/Lu4xk0J19M0hAFKUd4DIygJq1wn3g1fp3BHKRqV9EcGNdSFM2zDpbJM97EWZ07znO5dQhAIcCpsT1k61CTbHzWVer63syywfeiIR/mFYZRhPyfiUOqSfK//k5uO+uxWHoK/lxqoEK1BOYSLF8VfV+V2v9Sysn8EfW9FflQYwVdzGVFBwVU=
