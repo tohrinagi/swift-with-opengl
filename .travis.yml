@@ -5,7 +5,8 @@ before_install:
   - brew install swiftlint
 script:
   - swiftlint
-  - make clean build test
+  - xcodebuild -project swift-with-opengl.xcodeproj clean
+  - xcodebuild -project swift-with-opengl.xcodeproj -target swift-with-opengl -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO
 osx_image: xcode8
 notifications:
   slack:
