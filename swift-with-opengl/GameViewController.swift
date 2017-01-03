@@ -9,14 +9,13 @@
 import GLKit
 import OpenGLES
 
-func BUFFER_OFFSET(i: Int) -> UnsafePointer<Void> {
-    let p: UnsafePointer<Void> = nil
-    return p.advancedBy(i)
+func BUFFER_OFFSET(_ i: Int) -> UnsafeRawPointer? {
+    return UnsafeRawPointer(bitPattern: i)
 }
 
 let uniformModelviewprojectionMatrix = 0
 let uniformNormalMatrix = 1
-var uniforms = [GLint](count: 2, repeatedValue: 0)
+var uniforms = [GLint](repeating: 0, count: 2)
 
 class GameViewController: GLKViewController {
 
@@ -35,8 +34,8 @@ class GameViewController: GLKViewController {
     deinit {
         self.tearDownGL()
 
-        if EAGLContext.currentContext() === self.context {
-            EAGLContext.setCurrentContext(nil)
+        if EAGLContext.current() === self.context {
+            EAGLContext.setCurrent(nil)
         }
     }
 
@@ -44,7 +43,7 @@ class GameViewController: GLKViewController {
         super.viewDidLoad()
 
         // EAGLContextを受取、GLKViewに渡す
-        self.context = EAGLContext(API: .OpenGLES3)
+        self.context = EAGLContext(api: .openGLES3)
 
         if !(self.context != nil) {
             print("Failed to create ES context")
@@ -53,7 +52,7 @@ class GameViewController: GLKViewController {
         let view = self.view as! GLKView
         view.context = self.context!
         // デプスバッファは24bit
-        view.drawableDepthFormat = .Format24
+        view.drawableDepthFormat = .format24
 
         self.setupGL()
     }
@@ -61,55 +60,63 @@ class GameViewController: GLKViewController {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
 
-        if self.isViewLoaded() && (self.view.window != nil) {
+        if self.isViewLoaded && (self.view.window != nil) {
             self.view = nil
 
             self.tearDownGL()
 
-            if EAGLContext.currentContext() === self.context {
-                EAGLContext.setCurrentContext(nil)
+            if EAGLContext.current() === self.context {
+                EAGLContext.setCurrent(nil)
             }
             self.context = nil
         }
     }
 
     func setupGL() {
-        EAGLContext.setCurrentContext(self.context)
+        EAGLContext.setCurrent(self.context)
 
-        self.loadShaders()
-
-        // ライト設定
-        // GLKitのレンダリングは不要のためコメントアウト
-        /*
-        self.effect = GLKBaseEffect()
-        self.effect!.light0.enabled = GLboolean(GL_TRUE)
-        self.effect!.light0.diffuseColor = GLKVector4Make(1.0, 0.4, 0.4, 1.0)
-        */
+        if !self.loadShaders() {
+            print("failer load shaders")
+            return
+        }
 
         // デプスバッファ更新ON（更新しないと陰影消去できない）
         glEnable(GLenum(GL_DEPTH_TEST))
 
         // 下記はもともとglGenVertexArraysOESだったOES等はES2.0のベンダー名。
         // ES3.0では標準化しているので外す
+        
+        // n(1)個の頂点配列オブジェクトを作成しvertexArrayにハンドルを渡す
         glGenVertexArrays(1, &vertexArray)
+        // 頂点配列オブジェクトをバインドし利用できるようにする
         glBindVertexArray(vertexArray)
 
+        // n(1)個のバッファオブジェクトを作成する
         glGenBuffers(1, &vertexBuffer)
+        // バッファオブジェクトをターゲットにバインドして利用できるようにする
+        // 第１引数にはGL_ARRAY_BUFFER(頂点バッファ)かGL_ELEMENT_ARRAY_BUFFER(頂点インデックス)が入る
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(sizeof(GLfloat) * gCubeVertexData.count), &gCubeVertexData, GLenum(GL_STATIC_DRAW))
+        // バッファオブジェクトにデータ(頂点データ)を転送する
+        // GL_STATIC_DRAWの箇所はデータの使い方を指定し効率化に役立てる
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gCubeVertexData.count), &gCubeVertexData, GLenum(GL_STATIC_DRAW))
 
-        glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Position.rawValue))
-        glVertexAttribPointer(GLuint(GLKVertexAttrib.Position.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), 24, BUFFER_OFFSET(0))
-        glEnableVertexAttribArray(GLuint(GLKVertexAttrib.Normal.rawValue))
-        glVertexAttribPointer(GLuint(GLKVertexAttrib.Normal.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), 24, BUFFER_OFFSET(12))
+        // 指定した属性を有効にする(ここではPosition)
+        glEnableVertexAttribArray(GLuint(GLKVertexAttrib.position.rawValue))
+            // 属性とバッファオブジェクトを関連付ける
+        glVertexAttribPointer(GLuint(GLKVertexAttrib.position.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), 24, BUFFER_OFFSET(0))
+        // 指定した属性を有効にする(ここではNormal)
+        glEnableVertexAttribArray(GLuint(GLKVertexAttrib.normal.rawValue))
+            // 属性とバッファオブジェクトを関連付ける
+        glVertexAttribPointer(GLuint(GLKVertexAttrib.normal.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), 24, BUFFER_OFFSET(12))
 
         glBindVertexArray(0)
     }
 
     func tearDownGL() {
-        EAGLContext.setCurrentContext(self.context)
+        EAGLContext.setCurrent(self.context)
 
         glDeleteBuffers(1, &vertexBuffer)
+        // 頂点配列オブジェクトを破棄
         glDeleteVertexArrays(1, &vertexArray)
 
         self.effect = nil
@@ -127,22 +134,9 @@ class GameViewController: GLKViewController {
         let aspect = fabsf(Float(self.view.bounds.size.width / self.view.bounds.size.height))
         let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(65.0), aspect, 0.1, 100.0)
 
-        // GLKitのレンダリングは不要のためコメントアウト
-        //self.effect?.transform.projectionMatrix = projectionMatrix
-
-        // ローカル座標を開店させる行列
+        // ローカル座標を回転させる行列
         var baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, -4.0)
         baseModelViewMatrix = GLKMatrix4Rotate(baseModelViewMatrix, rotation, 0.0, 1.0, 0.0)
-
-        // Compute the model view matrix for the object rendered with GLKit
-        // GLKitのレンダリングは不要のためコメントアウト
-        /*
-        var modelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, -1.5)
-        modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, rotation, 1.0, 1.0, 1.0)
-        modelViewMatrix = GLKMatrix4Multiply(baseModelViewMatrix, modelViewMatrix)
-
-        self.effect?.transform.modelviewMatrix = modelViewMatrix
-        */
 
         // Compute the model view matrix for the object rendered with ES2
         var modelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, 1.5)
@@ -155,31 +149,27 @@ class GameViewController: GLKViewController {
         rotation += Float(self.timeSinceLastUpdate * 0.5)
     }
 
-    override func glkView(view: GLKView, drawInRect rect: CGRect) {
+    override func glkView(_ view: GLKView, drawIn rect: CGRect) {
         glClearColor(0.65, 0.65, 0.65, 1.0)
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT) | GLbitfield(GL_DEPTH_BUFFER_BIT))
 
         glBindVertexArray(vertexArray)
 
-        // Render the object with GLKit
-        // GLKitのレンダリングは不要のためコメントアウト
-        /*
-        self.effect?.prepareToDraw()
-
-        glDrawArrays(GLenum(GL_TRIANGLES), 0, 36)
-        */
-
         // Render the object again with ES2
         glUseProgram(program)
 
-        withUnsafePointer(&modelViewProjectionMatrix, {
-            glUniformMatrix4fv(uniforms[uniformModelviewprojectionMatrix], 1, 0, UnsafePointer($0))
+        withUnsafePointer(to: &modelViewProjectionMatrix, {
+            $0.withMemoryRebound(to: Float.self, capacity: 16, {
+                glUniformMatrix4fv(uniforms[uniformModelviewprojectionMatrix], 1, 0, $0)
+            })
         })
-
-        withUnsafePointer(&normalMatrix, {
-            glUniformMatrix3fv(uniforms[uniformNormalMatrix], 1, 0, UnsafePointer($0))
+        
+        withUnsafePointer(to: &normalMatrix, {
+            $0.withMemoryRebound(to: Float.self, capacity: 9, {
+                glUniformMatrix3fv(uniforms[uniformNormalMatrix], 1, 0, $0)
+            })
         })
-
+        
         glDrawArrays(GLenum(GL_TRIANGLES), 0, 36)
     }
 
@@ -196,14 +186,14 @@ class GameViewController: GLKViewController {
 
         // シェーダーを作成、読み込みしコンパイル
         // 頂点シェーダ
-        vertShaderPathname = NSBundle.mainBundle().pathForResource("Shader", ofType: "vsh")!
+        vertShaderPathname = Bundle.main.path(forResource: "Shader", ofType: "vsh")!
         if self.compileShader(&vertShader, type: GLenum(GL_VERTEX_SHADER), file: vertShaderPathname) == false {
             print("Failed to compile vertex shader")
             return false
         }
 
         // フラグメントシェーダ
-        fragShaderPathname = NSBundle.mainBundle().pathForResource("Shader", ofType: "fsh")!
+        fragShaderPathname = Bundle.main.path(forResource: "Shader", ofType: "fsh")!
         if !self.compileShader(&fragShader, type: GLenum(GL_FRAGMENT_SHADER), file: fragShaderPathname) {
             print("Failed to compile fragment shader")
             return false
@@ -259,16 +249,16 @@ class GameViewController: GLKViewController {
     }
 
 
-    func compileShader(inout shader: GLuint, type: GLenum, file: String) -> Bool {
+    func compileShader(_ shader: inout GLuint, type: GLenum, file: String) -> Bool {
         var status: GLint = 0
         var source: UnsafePointer<Int8>
         do {
-            source = try NSString(contentsOfFile: file, encoding: NSUTF8StringEncoding).UTF8String
+            source = try NSString(contentsOfFile: file, encoding: String.Encoding.utf8.rawValue).utf8String!
         } catch {
             print("Failed to load vertex shader")
             return false
         }
-        var castSource = UnsafePointer<GLchar>(source)
+        var castSource: UnsafePointer<GLchar>? = UnsafePointer<GLchar>(source)
 
         shader = glCreateShader(type)
         glShaderSource(shader, 1, &castSource, nil)
@@ -293,7 +283,7 @@ class GameViewController: GLKViewController {
         return true
     }
 
-    func linkProgram(prog: GLuint) -> Bool {
+    func linkProgram(_ prog: GLuint) -> Bool {
         var status: GLint = 0
         glLinkProgram(prog)
 
@@ -316,14 +306,14 @@ class GameViewController: GLKViewController {
         return true
     }
 
-    func validateProgram(prog: GLuint) -> Bool {
+    func validateProgram(_ prog: GLuint) -> Bool {
         var logLength: GLsizei = 0
         var status: GLint = 0
 
         glValidateProgram(prog)
         glGetProgramiv(prog, GLenum(GL_INFO_LOG_LENGTH), &logLength)
         if logLength > 0 {
-            var log: [GLchar] = [GLchar](count: Int(logLength), repeatedValue: 0)
+            var log: [GLchar] = [GLchar](repeating: 0, count: Int(logLength))
             glGetProgramInfoLog(prog, logLength, &logLength, &log)
             print("Program validate log: \n\(log)")
         }
