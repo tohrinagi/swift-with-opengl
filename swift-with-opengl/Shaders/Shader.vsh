@@ -11,8 +11,10 @@
 
 layout (location = ATTRIB_POSITION) in vec3 position;
 
+uniform mat4 modelViewPerspectiveMatrix;
+
 void main()
 {
-    gl_Position.xyz = position;
-    gl_Position.w = 1.0;
+    vec4 v = vec4(position, 1);
+    gl_Position = modelViewPerspectiveMatrix * v;
 }

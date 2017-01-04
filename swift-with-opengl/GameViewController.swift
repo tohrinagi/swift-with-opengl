@@ -13,10 +13,6 @@ func BUFFER_OFFSET(_ i: Int) -> UnsafeRawPointer? {
     return UnsafeRawPointer(bitPattern: i)
 }
 
-let uniformModelviewprojectionMatrix = 0
-let uniformNormalMatrix = 1
-var uniforms = [GLint](repeating: 0, count: 2)
-
 class GameViewController: GLKViewController {
 
     var program: GLuint = 0
@@ -28,6 +24,8 @@ class GameViewController: GLKViewController {
     var vertexArray: GLuint = 0
     var vertexBuffer: GLuint = 0
 
+    var uniformMatrix: GLint = 0
+    
     var context: EAGLContext? = nil
     var effect: GLKBaseEffect? = nil
 
@@ -79,6 +77,8 @@ class GameViewController: GLKViewController {
             return
         }
         
+        uniformMatrix = glGetUniformLocation(program, "modelViewPerspectiveMatrix")
+        
         // VAOを初めに作る必要がある
         glGenVertexArrays(1, &vertexArray)
         glBindVertexArray(vertexArray)
@@ -109,6 +109,17 @@ class GameViewController: GLKViewController {
     }
 
     func update() {
+        
+        // 画面サイズから射影行列を作成
+        let aspect = fabsf(Float(self.view.bounds.size.width / self.view.bounds.size.height))
+        let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(65.0), aspect, 0.1, 100.0)
+    
+        let viewMatrix = GLKMatrix4MakeLookAt(4, 3, 3, 0, 0, 0, 0, 1, 0)
+        
+        let modelMatrix = GLKMatrix4Identity
+        
+        modelViewProjectionMatrix = GLKMatrix4Multiply(projectionMatrix, viewMatrix)
+        modelViewProjectionMatrix = GLKMatrix4Multiply(modelViewProjectionMatrix, modelMatrix)
     }
 
     override func glkView(_ view: GLKView, drawIn rect: CGRect) {
@@ -130,6 +141,12 @@ class GameViewController: GLKViewController {
         
         // シェーダー設定
         glUseProgram(program)
+        
+        withUnsafePointer(to: &modelViewProjectionMatrix, {
+            $0.withMemoryRebound(to: Float.self, capacity: 16, {
+                glUniformMatrix4fv(uniformMatrix, 1, 0, $0)
+            })
+        })
         
         // 三角形を描きます！
         glDrawArrays(GLenum(GL_TRIANGLES), 0, 3); // 頂点0から始まります。合計3つの頂点で１つの三角形です。
