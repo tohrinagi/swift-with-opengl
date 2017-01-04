@@ -7,11 +7,12 @@
 //
 #version 300 es
 
+// 頂点シェーダから書き込まれた色
+in lowp vec3 fragmentColor;
+
 out mediump vec4 flagColor;
 
 void main()
 {
-    //2.0では下記だが、3.0ではgl_FragColorが廃止のため
-    //gl_FragColor = colorVarying;
-    flagColor   = vec4(1.0, 0, 0, 1.0);
+    flagColor   = vec4(fragmentColor,1.0);
 }

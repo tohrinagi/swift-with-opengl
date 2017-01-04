@@ -23,6 +23,7 @@ class GameViewController: GLKViewController {
 
     var vertexArray: GLuint = 0
     var vertexBuffer: GLuint = 0
+    var colorBuffer: GLuint = 0
 
     var uniformMatrix: GLint = 0
     
@@ -77,6 +78,11 @@ class GameViewController: GLKViewController {
             return
         }
         
+        // デプステストを有効にする
+        glEnable(GLenum(GL_DEPTH_TEST))
+        // 前のものよりもカメラに近ければ、フラグメントを受け入れる
+        glDepthFunc(GLenum(GL_LESS))
+        
         uniformMatrix = glGetUniformLocation(program, "modelViewPerspectiveMatrix")
         
         // VAOを初めに作る必要がある
@@ -90,7 +96,12 @@ class GameViewController: GLKViewController {
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
         
         // 頂点をOpenGLに渡します。
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gTriangleVertexData.count), &gTriangleVertexData, GLenum(GL_STATIC_DRAW))
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gQubeVertexData.count), &gQubeVertexData, GLenum(GL_STATIC_DRAW))
+        
+        // カラーバッファも同様に作成
+        glGenBuffers(1, &colorBuffer)
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), colorBuffer)
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gColorBufferData.count), &gColorBufferData, GLenum(GL_STATIC_DRAW))
     }
 
     func tearDownGL() {
@@ -114,7 +125,7 @@ class GameViewController: GLKViewController {
         let aspect = fabsf(Float(self.view.bounds.size.width / self.view.bounds.size.height))
         let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(65.0), aspect, 0.1, 100.0)
     
-        let viewMatrix = GLKMatrix4MakeLookAt(4, 3, 3, 0, 0, 0, 0, 1, 0)
+        let viewMatrix = GLKMatrix4MakeLookAt(4, 3, -3, 0, 0, 0, 0, 1, 0)
         
         let modelMatrix = GLKMatrix4Identity
         
@@ -128,10 +139,21 @@ class GameViewController: GLKViewController {
         
         // 最初の属性バッファ：頂点
         glEnableVertexAttribArray(0)
-        
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
         glVertexAttribPointer(
             0,                  // 属性0：0に特に理由はありません。しかし、シェーダ内のlayoutとあわせないといけません。
+            3,                  // サイズ
+            GLenum(GL_FLOAT),           // タイプ
+            GLboolean(GL_FALSE),           // 正規化？
+            0,                  // ストライド
+            nil            // 配列バッファオフセット
+        )
+        
+        // 次の属性バッファ：色
+        glEnableVertexAttribArray(1)
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), colorBuffer)
+        glVertexAttribPointer(
+            1,                  // 属性1：1に特に理由はありません。しかし、シェーダ内のlayoutとあわせないといけません。
             3,                  // サイズ
             GLenum(GL_FLOAT),           // タイプ
             GLboolean(GL_FALSE),           // 正規化？
@@ -149,7 +171,7 @@ class GameViewController: GLKViewController {
         })
         
         // 三角形を描きます！
-        glDrawArrays(GLenum(GL_TRIANGLES), 0, 3); // 頂点0から始まります。合計3つの頂点で１つの三角形です。
+        glDrawArrays(GLenum(GL_TRIANGLES), 0, 12*3); // 頂点0から始まります。合計3つの頂点で１つの三角形です。
         
         glDisableVertexAttribArray(0)
     }
@@ -297,8 +319,81 @@ class GameViewController: GLKViewController {
     }
 }
 
-var gTriangleVertexData: [GLfloat] = [
-  -1.0, -1.0, 0.0,
-  1.0, -1.0, 0.0,
-  0.0, 1.0, 0.0
+var gQubeVertexData: [GLfloat] = [
+    -1.0, -1.0, -1.0, // 三角形1:開始
+    -1.0, -1.0, 1.0,
+    -1.0, 1.0, 1.0, // 三角形1:終了
+    1.0, 1.0, -1.0, // 三角形2:開始
+    -1.0, -1.0, -1.0,
+    -1.0, 1.0, -1.0, // 三角形2:終了
+    1.0, -1.0, 1.0,
+    -1.0, -1.0, -1.0,
+    1.0, -1.0, -1.0,
+    1.0, 1.0, -1.0,
+    1.0, -1.0, -1.0,
+    -1.0, -1.0, -1.0,
+    -1.0, -1.0, -1.0,
+    -1.0, 1.0, 1.0,
+    -1.0, 1.0, -1.0,
+    1.0, -1.0, 1.0,
+    -1.0, -1.0, 1.0,
+    -1.0, -1.0, -1.0,
+    -1.0, 1.0, 1.0,
+    -1.0, -1.0, 1.0,
+    1.0, -1.0, 1.0,
+    1.0, 1.0, 1.0,
+    1.0, -1.0, -1.0,
+    1.0, 1.0, -1.0,
+    1.0, -1.0, -1.0,
+    1.0, 1.0, 1.0,
+    1.0, -1.0, 1.0,
+    1.0, 1.0, 1.0,
+    1.0, 1.0, -1.0,
+    -1.0, 1.0, -1.0,
+    1.0, 1.0, 1.0,
+    -1.0, 1.0, -1.0,
+    -1.0, 1.0, 1.0,
+    1.0, 1.0, 1.0,
+    -1.0, 1.0, 1.0,
+    1.0, -1.0, 1.0
+]
+
+// 各頂点に一つの色。これらはランダムに作られました。
+var gColorBufferData: [GLfloat] = [
+  0.583, 0.771, 0.014,
+  0.609, 0.115, 0.436,
+  0.327, 0.483, 0.844,
+  0.822, 0.569, 0.201,
+  0.435, 0.602, 0.223,
+  0.310, 0.747, 0.185,
+  0.597, 0.770, 0.761,
+  0.559, 0.436, 0.730,
+  0.359, 0.583, 0.152,
+  0.483, 0.596, 0.789,
+  0.559, 0.861, 0.639,
+  0.195, 0.548, 0.859,
+  0.014, 0.184, 0.576,
+  0.771, 0.328, 0.970,
+  0.406, 0.615, 0.116,
+  0.676, 0.977, 0.133,
+  0.971, 0.572, 0.833,
+  0.140, 0.616, 0.489,
+  0.997, 0.513, 0.064,
+  0.945, 0.719, 0.592,
+  0.543, 0.021, 0.978,
+  0.279, 0.317, 0.505,
+  0.167, 0.620, 0.077,
+  0.347, 0.857, 0.137,
+  0.055, 0.953, 0.042,
+  0.714, 0.505, 0.345,
+  0.783, 0.290, 0.734,
+  0.722, 0.645, 0.174,
+  0.302, 0.455, 0.848,
+  0.225, 0.587, 0.040,
+  0.517, 0.713, 0.338,
+  0.053, 0.959, 0.120,
+  0.393, 0.621, 0.362,
+  0.673, 0.211, 0.457,
+  0.820, 0.883, 0.371,
+  0.982, 0.099, 0.879
 ]
