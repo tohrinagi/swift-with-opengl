@@ -74,42 +74,23 @@ class GameViewController: GLKViewController {
 
     func setupGL() {
         EAGLContext.setCurrent(self.context)
-
         if !self.loadShaders() {
             print("failer load shaders")
             return
         }
-
-        // デプスバッファ更新ON（更新しないと陰影消去できない）
-        glEnable(GLenum(GL_DEPTH_TEST))
-
-        // 下記はもともとglGenVertexArraysOESだったOES等はES2.0のベンダー名。
-        // ES3.0では標準化しているので外す
         
-        // n(1)個の頂点配列オブジェクトを作成しvertexArrayにハンドルを渡す
+        // VAOを初めに作る必要がある
         glGenVertexArrays(1, &vertexArray)
-        // 頂点配列オブジェクトをバインドし利用できるようにする
         glBindVertexArray(vertexArray)
-
-        // n(1)個のバッファオブジェクトを作成する
+        
+        // バッファを1つ作り、vertexbufferに結果IDを入れます。
         glGenBuffers(1, &vertexBuffer)
-        // バッファオブジェクトをターゲットにバインドして利用できるようにする
-        // 第１引数にはGL_ARRAY_BUFFER(頂点バッファ)かGL_ELEMENT_ARRAY_BUFFER(頂点インデックス)が入る
+        
+        // 次のコマンドは'vertexbuffer'バッファについてです。
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
-        // バッファオブジェクトにデータ(頂点データ)を転送する
-        // GL_STATIC_DRAWの箇所はデータの使い方を指定し効率化に役立てる
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gCubeVertexData.count), &gCubeVertexData, GLenum(GL_STATIC_DRAW))
-
-        // 指定した属性を有効にする(ここではPosition)
-        glEnableVertexAttribArray(GLuint(GLKVertexAttrib.position.rawValue))
-            // 属性とバッファオブジェクトを関連付ける
-        glVertexAttribPointer(GLuint(GLKVertexAttrib.position.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), 24, BUFFER_OFFSET(0))
-        // 指定した属性を有効にする(ここではNormal)
-        glEnableVertexAttribArray(GLuint(GLKVertexAttrib.normal.rawValue))
-            // 属性とバッファオブジェクトを関連付ける
-        glVertexAttribPointer(GLuint(GLKVertexAttrib.normal.rawValue), 3, GLenum(GL_FLOAT), GLboolean(GL_FALSE), 24, BUFFER_OFFSET(12))
-
-        glBindVertexArray(0)
+        
+        // 頂点をOpenGLに渡します。
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gTriangleVertexData.count), &gTriangleVertexData, GLenum(GL_STATIC_DRAW))
     }
 
     func tearDownGL() {
@@ -127,53 +108,33 @@ class GameViewController: GLKViewController {
         }
     }
 
-    // MARK: - GLKView and GLKViewController delegate methods
-
     func update() {
-        // 画面サイズからカメラ行列を作成
-        let aspect = fabsf(Float(self.view.bounds.size.width / self.view.bounds.size.height))
-        let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(65.0), aspect, 0.1, 100.0)
-
-        // ローカル座標を回転させる行列
-        var baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, -4.0)
-        baseModelViewMatrix = GLKMatrix4Rotate(baseModelViewMatrix, rotation, 0.0, 1.0, 0.0)
-
-        // Compute the model view matrix for the object rendered with ES2
-        var modelViewMatrix = GLKMatrix4MakeTranslation(0.0, 0.0, 1.5)
-        modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, rotation, 1.0, 1.0, 1.0)
-        modelViewMatrix = GLKMatrix4Multiply(baseModelViewMatrix, modelViewMatrix)
-
-        normalMatrix = GLKMatrix3InvertAndTranspose(GLKMatrix4GetMatrix3(modelViewMatrix), nil)
-        modelViewProjectionMatrix = GLKMatrix4Multiply(projectionMatrix, modelViewMatrix)
-
-        rotation += Float(self.timeSinceLastUpdate * 0.5)
     }
 
     override func glkView(_ view: GLKView, drawIn rect: CGRect) {
         glClearColor(0.65, 0.65, 0.65, 1.0)
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT) | GLbitfield(GL_DEPTH_BUFFER_BIT))
-
-        //VertexArrayをバインド
-        glBindVertexArray(vertexArray)
-
+        
+        // 最初の属性バッファ：頂点
+        glEnableVertexAttribArray(0)
+        
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
+        glVertexAttribPointer(
+            0,                  // 属性0：0に特に理由はありません。しかし、シェーダ内のlayoutとあわせないといけません。
+            3,                  // サイズ
+            GLenum(GL_FLOAT),           // タイプ
+            GLboolean(GL_FALSE),           // 正規化？
+            0,                  // ストライド
+            nil            // 配列バッファオフセット
+        )
+        
         // シェーダー設定
         glUseProgram(program)
-
-        // uniform に値設定
-        withUnsafePointer(to: &modelViewProjectionMatrix, {
-            $0.withMemoryRebound(to: Float.self, capacity: 16, {
-                glUniformMatrix4fv(uniforms[uniformModelviewprojectionMatrix], 1, 0, $0)
-            })
-        })
         
-        withUnsafePointer(to: &normalMatrix, {
-            $0.withMemoryRebound(to: Float.self, capacity: 9, {
-                glUniformMatrix3fv(uniforms[uniformNormalMatrix], 1, 0, $0)
-            })
-        })
+        // 三角形を描きます！
+        glDrawArrays(GLenum(GL_TRIANGLES), 0, 3); // 頂点0から始まります。合計3つの頂点で１つの三角形です。
         
-        //描画
-        glDrawArrays(GLenum(GL_TRIANGLES), 0, 36)
+        glDisableVertexAttribArray(0)
     }
 
     // (mark): -  OpenGL ES 2 shader compilation
@@ -208,12 +169,6 @@ class GameViewController: GLKViewController {
         // 参照IDとフラグメントシェーダを紐付け
         glAttachShader(program, fragShader)
 
-        // 属性を関連付ける
-        // リンクする前に実行する必要がある
-        // 3.0では廃止で、シェーダー内でレイアウトをするようになった
-        //glBindAttribLocation(program, GLuint(GLKVertexAttrib.Position.rawValue), "position")
-        //glBindAttribLocation(program, GLuint(GLKVertexAttrib.Normal.rawValue), "normal")
-
         // シェーダーオブジェクトをリンク
         if !self.linkProgram(program) {
             print("Failed to link program: \(program)")
@@ -233,10 +188,6 @@ class GameViewController: GLKViewController {
 
             return false
         }
-
-        // シェーダーから変数ハンドルを貰う
-        uniforms[uniformModelviewprojectionMatrix] = glGetUniformLocation(program, "modelViewProjectionMatrix")
-        uniforms[uniformNormalMatrix] = glGetUniformLocation(program, "normalMatrix")
 
         // リンクしたシェーダーオブジェクトはこの時点で不要になるため削除
         if vertShader != 0 {
@@ -329,48 +280,8 @@ class GameViewController: GLKViewController {
     }
 }
 
-var gCubeVertexData: [GLfloat] = [
-    // Data layout for each line below is:
-    // positionX, positionY, positionZ,     normalX, normalY, normalZ,
-  0.5, -0.5, -0.5, 1.0, 0.0, 0.0,
-  0.5, 0.5, -0.5, 1.0, 0.0, 0.0,
-  0.5, -0.5, 0.5, 1.0, 0.0, 0.0,
-  0.5, -0.5, 0.5, 1.0, 0.0, 0.0,
-  0.5, 0.5, -0.5, 1.0, 0.0, 0.0,
-  0.5, 0.5, 0.5, 1.0, 0.0, 0.0,
-
-  0.5, 0.5, -0.5, 0.0, 1.0, 0.0,
-  -0.5, 0.5, -0.5, 0.0, 1.0, 0.0,
-  0.5, 0.5, 0.5, 0.0, 1.0, 0.0,
-  0.5, 0.5, 0.5, 0.0, 1.0, 0.0,
-  -0.5, 0.5, -0.5, 0.0, 1.0, 0.0,
-  -0.5, 0.5, 0.5, 0.0, 1.0, 0.0,
-
-  -0.5, 0.5, -0.5, -1.0, 0.0, 0.0,
-  -0.5, -0.5, -0.5, -1.0, 0.0, 0.0,
-  -0.5, 0.5, 0.5, -1.0, 0.0, 0.0,
-  -0.5, 0.5, 0.5, -1.0, 0.0, 0.0,
-  -0.5, -0.5, -0.5, -1.0, 0.0, 0.0,
-  -0.5, -0.5, 0.5, -1.0, 0.0, 0.0,
-
-  -0.5, -0.5, -0.5, 0.0, -1.0, 0.0,
-  0.5, -0.5, -0.5, 0.0, -1.0, 0.0,
-  -0.5, -0.5, 0.5, 0.0, -1.0, 0.0,
-  -0.5, -0.5, 0.5, 0.0, -1.0, 0.0,
-  0.5, -0.5, -0.5, 0.0, -1.0, 0.0,
-  0.5, -0.5, 0.5, 0.0, -1.0, 0.0,
-
-  0.5, 0.5, 0.5, 0.0, 0.0, 1.0,
-  -0.5, 0.5, 0.5, 0.0, 0.0, 1.0,
-  0.5, -0.5, 0.5, 0.0, 0.0, 1.0,
-  0.5, -0.5, 0.5, 0.0, 0.0, 1.0,
-  -0.5, 0.5, 0.5, 0.0, 0.0, 1.0,
-  -0.5, -0.5, 0.5, 0.0, 0.0, 1.0,
-
-  0.5, -0.5, -0.5, 0.0, 0.0, -1.0,
-  -0.5, -0.5, -0.5, 0.0, 0.0, -1.0,
-  0.5, 0.5, -0.5, 0.0, 0.0, -1.0,
-  0.5, 0.5, -0.5, 0.0, 0.0, -1.0,
-  -0.5, -0.5, -0.5, 0.0, 0.0, -1.0,
-  -0.5, 0.5, -0.5, 0.0, 0.0, -1.0
+var gTriangleVertexData: [GLfloat] = [
+  -1.0, -1.0, 0.0,
+  1.0, -1.0, 0.0,
+  0.0, 1.0, 0.0
 ]
