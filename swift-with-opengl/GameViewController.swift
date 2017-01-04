@@ -153,11 +153,13 @@ class GameViewController: GLKViewController {
         glClearColor(0.65, 0.65, 0.65, 1.0)
         glClear(GLbitfield(GL_COLOR_BUFFER_BIT) | GLbitfield(GL_DEPTH_BUFFER_BIT))
 
+        //VertexArrayをバインド
         glBindVertexArray(vertexArray)
 
-        // Render the object again with ES2
+        // シェーダー設定
         glUseProgram(program)
 
+        // uniform に値設定
         withUnsafePointer(to: &modelViewProjectionMatrix, {
             $0.withMemoryRebound(to: Float.self, capacity: 16, {
                 glUniformMatrix4fv(uniforms[uniformModelviewprojectionMatrix], 1, 0, $0)
@@ -170,6 +172,7 @@ class GameViewController: GLKViewController {
             })
         })
         
+        //描画
         glDrawArrays(GLenum(GL_TRIANGLES), 0, 36)
     }
 
