@@ -14,6 +14,7 @@
 		E45859481E1A444800F82CCC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E45859461E1A444800F82CCC /* Main.storyboard */; };
 		E458594A1E1A444800F82CCC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E45859491E1A444800F82CCC /* Assets.xcassets */; };
 		E458594D1E1A444800F82CCC /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E458594B1E1A444800F82CCC /* LaunchScreen.storyboard */; };
+		E4BF17DE1E1D1FDA004BFE59 /* dice.bmp in Resources */ = {isa = PBXBuildFile; fileRef = E4BF17DD1E1D1FDA004BFE59 /* dice.bmp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		E45859491E1A444800F82CCC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E458594C1E1A444800F82CCC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		E458594E1E1A444800F82CCC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E4BF17DD1E1D1FDA004BFE59 /* dice.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = dice.bmp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +60,7 @@
 		E458593D1E1A444800F82CCC /* swift-with-opengl */ = {
 			isa = PBXGroup;
 			children = (
+				E4BF17DD1E1D1FDA004BFE59 /* dice.bmp */,
 				E458593E1E1A444800F82CCC /* AppDelegate.swift */,
 				E45859401E1A444800F82CCC /* Shader.fsh */,
 				E45859421E1A444800F82CCC /* Shader.vsh */,
@@ -130,6 +133,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E4BF17DE1E1D1FDA004BFE59 /* dice.bmp in Resources */,
 				E45859481E1A444800F82CCC /* Main.storyboard in Resources */,
 				E45859431E1A444800F82CCC /* Shader.vsh in Resources */,
 				E458594A1E1A444800F82CCC /* Assets.xcassets in Resources */,

@@ -23,7 +23,8 @@ class GameViewController: GLKViewController {
 
     var vertexArray: GLuint = 0
     var vertexBuffer: GLuint = 0
-    var colorBuffer: GLuint = 0
+    var uvBuffer: GLuint = 0
+    var textureBuffer: GLuint = 0
 
     var uniformMatrix: GLint = 0
     
@@ -78,6 +79,13 @@ class GameViewController: GLKViewController {
             return
         }
         
+        let bmpFilePath = Bundle.main.path(forResource: "dice", ofType: "bmp")!
+        textureBuffer = self.loadBMP(bmpFilePath)
+        if textureBuffer == 0 {
+            print("failer textures")
+            return
+        }
+        
         // デプステストを有効にする
         glEnable(GLenum(GL_DEPTH_TEST))
         // 前のものよりもカメラに近ければ、フラグメントを受け入れる
@@ -98,10 +106,10 @@ class GameViewController: GLKViewController {
         // 頂点をOpenGLに渡します。
         glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gQubeVertexData.count), &gQubeVertexData, GLenum(GL_STATIC_DRAW))
         
-        // カラーバッファも同様に作成
-        glGenBuffers(1, &colorBuffer)
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), colorBuffer)
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gColorBufferData.count), &gColorBufferData, GLenum(GL_STATIC_DRAW))
+        // UVバッファも同様に作成
+        glGenBuffers(1, &uvBuffer)
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), uvBuffer)
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gUVBufferData.count), &gUVBufferData, GLenum(GL_STATIC_DRAW))
     }
 
     func tearDownGL() {
@@ -125,7 +133,7 @@ class GameViewController: GLKViewController {
         let aspect = fabsf(Float(self.view.bounds.size.width / self.view.bounds.size.height))
         let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(65.0), aspect, 0.1, 100.0)
     
-        let viewMatrix = GLKMatrix4MakeLookAt(4, 3, -3, 0, 0, 0, 0, 1, 0)
+        let viewMatrix = GLKMatrix4MakeLookAt(4, 3, 3, 0, 0, 0, 0, 1, 0)
         
         let modelMatrix = GLKMatrix4Identity
         
@@ -149,12 +157,12 @@ class GameViewController: GLKViewController {
             nil            // 配列バッファオフセット
         )
         
-        // 次の属性バッファ：色
+        // 次の属性バッファ：UV
         glEnableVertexAttribArray(1)
-        glBindBuffer(GLenum(GL_ARRAY_BUFFER), colorBuffer)
+        glBindBuffer(GLenum(GL_ARRAY_BUFFER), uvBuffer)
         glVertexAttribPointer(
             1,                  // 属性1：1に特に理由はありません。しかし、シェーダ内のlayoutとあわせないといけません。
-            3,                  // サイズ
+            2,                  // サイズ
             GLenum(GL_FLOAT),           // タイプ
             GLboolean(GL_FALSE),           // 正規化？
             0,                  // ストライド
@@ -317,6 +325,60 @@ class GameViewController: GLKViewController {
         }
         return returnVal
     }
+    
+    func loadBMP(_ file: String) -> GLuint {
+        do {
+            let dataURL = URL(fileURLWithPath: file)
+            // ファイル読み込み
+            let binaryData = try Data(contentsOf: dataURL, options: [])
+            
+            // ヘッダバイナリ
+            var header = [UInt8](repeating: 0, count: 54)
+            binaryData.copyBytes(to: &header, count: 54)
+            
+            // BM のマジックナンバーチェック
+            if header[0] != 0x42  || header[1] != 0x4d {
+                print("This isnt a BMP file.")
+                return 0
+            }
+            // 各ヘッダの値を取得
+            var dataPos    = Int(header[0x0A]) | (Int(header[0x0B]) << 8)
+            var imageSize  = Int(header[0x22]) | (Int(header[0x23]) << 8)
+            let width      = Int(header[0x12]) | (Int(header[0x13]) << 8)
+            let height     = Int(header[0x16]) | (Int(header[0x17]) << 8)
+            print("dataPos:\(dataPos) imageSize:\(imageSize) width:\(width) height:\(height)")
+            // エラーの値を修正
+            if imageSize==0 { imageSize = width*height*3 }
+            if dataPos==0 { dataPos=54 }
+            
+            var body = [UInt8](repeating:0, count: imageSize)
+            binaryData.copyBytes(to: &body, from: 54..<54+imageSize)
+            
+            // ひとつのOpenGLテクスチャを作ります。
+            var texture: GLuint = 0
+            glGenTextures(1, &texture)
+            
+            // 新たに作られたテクスチャを"バインド"します。つまりここから後のテクスチャ関数はこのテクスチャを変更します。
+            glBindTexture(GLenum(GL_TEXTURE_2D), texture)
+            
+            // OpenGLに画像を渡します。
+            // BMPの並びはBGRのため、本来引数７にはGL_BGRを渡す必要があるがES3ではないっぽい
+            glTexImage2D(GLenum(GL_TEXTURE_2D), 0, GL_RGB, Int32(width), Int32(height), 0, GLenum(GL_RGB), GLenum(GL_UNSIGNED_BYTE), body)
+            
+            // 画像を拡大(MAGnifying)するときは線形(LINEAR)フィルタリングを使います。
+            glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MAG_FILTER), GL_LINEAR)
+            // 画像を縮小(MINifying)するとき、線形(LINEAR)フィルタした、二つのミップマップを線形(LINEARYLY)に混ぜたものを使います。
+            glTexParameteri(GLenum(GL_TEXTURE_2D), GLenum(GL_TEXTURE_MIN_FILTER), GL_LINEAR_MIPMAP_LINEAR)
+            // 次のようにしてミップマップを作ります。
+            glGenerateMipmap(GLenum(GL_TEXTURE_2D))
+            
+            return texture
+            
+        } catch {
+            print("Failed to read the file.")
+            return 0
+        }
+    }
 }
 
 var gQubeVertexData: [GLfloat] = [
@@ -358,42 +420,42 @@ var gQubeVertexData: [GLfloat] = [
     1.0, -1.0, 1.0
 ]
 
-// 各頂点に一つの色。これらはランダムに作られました。
-var gColorBufferData: [GLfloat] = [
-  0.583, 0.771, 0.014,
-  0.609, 0.115, 0.436,
-  0.327, 0.483, 0.844,
-  0.822, 0.569, 0.201,
-  0.435, 0.602, 0.223,
-  0.310, 0.747, 0.185,
-  0.597, 0.770, 0.761,
-  0.559, 0.436, 0.730,
-  0.359, 0.583, 0.152,
-  0.483, 0.596, 0.789,
-  0.559, 0.861, 0.639,
-  0.195, 0.548, 0.859,
-  0.014, 0.184, 0.576,
-  0.771, 0.328, 0.970,
-  0.406, 0.615, 0.116,
-  0.676, 0.977, 0.133,
-  0.971, 0.572, 0.833,
-  0.140, 0.616, 0.489,
-  0.997, 0.513, 0.064,
-  0.945, 0.719, 0.592,
-  0.543, 0.021, 0.978,
-  0.279, 0.317, 0.505,
-  0.167, 0.620, 0.077,
-  0.347, 0.857, 0.137,
-  0.055, 0.953, 0.042,
-  0.714, 0.505, 0.345,
-  0.783, 0.290, 0.734,
-  0.722, 0.645, 0.174,
-  0.302, 0.455, 0.848,
-  0.225, 0.587, 0.040,
-  0.517, 0.713, 0.338,
-  0.053, 0.959, 0.120,
-  0.393, 0.621, 0.362,
-  0.673, 0.211, 0.457,
-  0.820, 0.883, 0.371,
-  0.982, 0.099, 0.879
+// UV
+var gUVBufferData: [GLfloat] = [
+    0.000059, 1.0-0.000004,
+    0.000103, 1.0-0.336048,
+    0.335973, 1.0-0.335903,
+    1.000023, 1.0-0.000013,
+    0.667979, 1.0-0.335851,
+    0.999958, 1.0-0.336064,
+    0.667979, 1.0-0.335851,
+    0.336024, 1.0-0.671877,
+    0.667969, 1.0-0.671889,
+    1.000023, 1.0-0.000013,
+    0.668104, 1.0-0.000013,
+    0.667979, 1.0-0.335851,
+    0.000059, 1.0-0.000004,
+    0.335973, 1.0-0.335903,
+    0.336098, 1.0-0.000071,
+    0.667979, 1.0-0.335851,
+    0.335973, 1.0-0.335903,
+    0.336024, 1.0-0.671877,
+    1.000004, 1.0-0.671847,
+    0.999958, 1.0-0.336064,
+    0.667979, 1.0-0.335851,
+    0.668104, 1.0-0.000013,
+    0.335973, 1.0-0.335903,
+    0.667979, 1.0-0.335851,
+    0.335973, 1.0-0.335903,
+    0.668104, 1.0-0.000013,
+    0.336098, 1.0-0.000071,
+    0.000103, 1.0-0.336048,
+    0.000004, 1.0-0.671870,
+    0.336024, 1.0-0.671877,
+    0.000103, 1.0-0.336048,
+    0.336024, 1.0-0.671877,
+    0.335973, 1.0-0.335903,
+    0.667969, 1.0-0.671889,
+    1.000004, 1.0-0.671847,
+    0.667979, 1.0-0.335851
 ]

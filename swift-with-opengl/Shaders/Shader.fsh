@@ -7,12 +7,15 @@
 //
 #version 300 es
 
-// 頂点シェーダから書き込まれた色
-in lowp vec3 fragmentColor;
+// 頂点シェーダからの値を書き込みます
+in lowp vec2 uv;
 
 out mediump vec4 flagColor;
 
+// すべてのメッシュで一定の値
+uniform sampler2D textureSampler;
+
 void main()
 {
-    flagColor   = vec4(fragmentColor,1.0);
+    flagColor = texture(textureSampler, uv);
 }
