@@ -16,6 +16,8 @@ func BUFFER_OFFSET(_ i: Int) -> UnsafeRawPointer? {
 class GameViewController: GLKViewController {
 
     var program: GLuint = 0
+    
+    var camera: Camera = Camera()
 
     var modelViewProjectionMatrix: GLKMatrix4 = GLKMatrix4Identity
     var normalMatrix: GLKMatrix3 = GLKMatrix3Identity
@@ -30,6 +32,7 @@ class GameViewController: GLKViewController {
     
     var context: EAGLContext? = nil
     var effect: GLKBaseEffect? = nil
+    var preTouchPoint = CGPoint(x: 0, y: 0)
 
     deinit {
         self.tearDownGL()
@@ -54,6 +57,7 @@ class GameViewController: GLKViewController {
         // デプスバッファは24bit
         view.drawableDepthFormat = .format24
 
+        camera.setAspect(width: Float(self.view.bounds.size.width), height: Float(self.view.bounds.size.height))
         self.setupGL()
     }
 
@@ -86,6 +90,8 @@ class GameViewController: GLKViewController {
             return
         }
         
+        // カメラのほうを向いていない法線の三角形をカリングします。
+        glEnable(GLenum(GL_CULL_FACE))
         // デプステストを有効にする
         glEnable(GLenum(GL_DEPTH_TEST))
         // 前のものよりもカメラに近ければ、フラグメントを受け入れる
@@ -128,16 +134,11 @@ class GameViewController: GLKViewController {
     }
 
     func update() {
-        
-        // 画面サイズから射影行列を作成
-        let aspect = fabsf(Float(self.view.bounds.size.width / self.view.bounds.size.height))
-        let projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(65.0), aspect, 0.1, 100.0)
-    
-        let viewMatrix = GLKMatrix4MakeLookAt(4, 3, 3, 0, 0, 0, 0, 1, 0)
+        camera.update()
         
         let modelMatrix = GLKMatrix4Identity
         
-        modelViewProjectionMatrix = GLKMatrix4Multiply(projectionMatrix, viewMatrix)
+        modelViewProjectionMatrix = GLKMatrix4Multiply(camera.projectionMatrix, camera.viewMatrix)
         modelViewProjectionMatrix = GLKMatrix4Multiply(modelViewProjectionMatrix, modelMatrix)
     }
 
@@ -182,6 +183,30 @@ class GameViewController: GLKViewController {
         glDrawArrays(GLenum(GL_TRIANGLES), 0, 12*3); // 頂点0から始まります。合計3つの頂点で１つの三角形です。
         
         glDisableVertexAttribArray(0)
+    }
+    @IBAction func dragGesture(_ sender: UIPanGestureRecognizer) {
+        // ドラッグ操作はカメラの上下左右移動に使用する
+        let speed: CGFloat = 0.01
+        switch sender.state {
+        case .began:
+            preTouchPoint = sender.translation(in: self.view)
+            break
+        case .changed:
+            let move = sender.translation(in: self.view)
+            let vec = CGPoint(x: move.x - preTouchPoint.x, y: move.y - preTouchPoint.y)
+            camera.verticalAngle = camera.verticalAngle + Float(vec.y * speed)
+            camera.horizontalAngle = camera.horizontalAngle + Float(vec.x * speed)
+            preTouchPoint = move
+            break
+        default:
+            break
+        }
+    }
+    @IBAction func PinchGesture(_ sender: UIPinchGestureRecognizer) {
+        let moveDistance: CGFloat = 0.2
+        // ピンチ動作は、カメラからターゲットへの距離移動に使用する
+        camera.distance = camera.distance - Float((sender.scale - 1.0) * moveDistance)
+        print("scale: \n\(sender.scale)")
     }
 
     // (mark): -  OpenGL ES 2 shader compilation
