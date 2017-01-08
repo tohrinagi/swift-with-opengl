@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E41E70671E22614B00332D06 /* cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = E41E70661E22614B00332D06 /* cube.obj */; };
+		E408D55F1E229BD4005B6766 /* miku.obj in Resources */ = {isa = PBXBuildFile; fileRef = E408D55E1E229BD4005B6766 /* miku.obj */; };
+		E408D5651E22A0AC005B6766 /* body.bmp in Resources */ = {isa = PBXBuildFile; fileRef = E408D5641E22A0AC005B6766 /* body.bmp */; };
 		E458593F1E1A444800F82CCC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E458593E1E1A444800F82CCC /* AppDelegate.swift */; };
 		E45859411E1A444800F82CCC /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = E45859401E1A444800F82CCC /* Shader.fsh */; };
 		E45859431E1A444800F82CCC /* Shader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = E45859421E1A444800F82CCC /* Shader.vsh */; };
@@ -21,7 +22,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		E41E70661E22614B00332D06 /* cube.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cube.obj; sourceTree = "<group>"; };
+		E408D55E1E229BD4005B6766 /* miku.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = miku.obj; sourceTree = "<group>"; };
+		E408D5641E22A0AC005B6766 /* body.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = body.bmp; sourceTree = "<group>"; };
 		E458593B1E1A444800F82CCC /* swift-with-opengl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "swift-with-opengl.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E458593E1E1A444800F82CCC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E45859401E1A444800F82CCC /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; };
@@ -77,7 +79,8 @@
 				E458594E1E1A444800F82CCC /* Info.plist */,
 				E4BF17DF1E2087B9004BFE59 /* Camera.swift */,
 				E4BF17E11E2234E7004BFE59 /* Model.swift */,
-				E41E70661E22614B00332D06 /* cube.obj */,
+				E408D55E1E229BD4005B6766 /* miku.obj */,
+				E408D5641E22A0AC005B6766 /* body.bmp */,
 			);
 			path = "swift-with-opengl";
 			sourceTree = "<group>";
@@ -145,10 +148,11 @@
 				E4BF17DE1E1D1FDA004BFE59 /* dice.bmp in Resources */,
 				E45859481E1A444800F82CCC /* Main.storyboard in Resources */,
 				E45859431E1A444800F82CCC /* Shader.vsh in Resources */,
+				E408D5651E22A0AC005B6766 /* body.bmp in Resources */,
 				E458594A1E1A444800F82CCC /* Assets.xcassets in Resources */,
 				E458594D1E1A444800F82CCC /* LaunchScreen.storyboard in Resources */,
 				E45859411E1A444800F82CCC /* Shader.fsh in Resources */,
-				E41E70671E22614B00332D06 /* cube.obj in Resources */,
+				E408D55F1E229BD4005B6766 /* miku.obj in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

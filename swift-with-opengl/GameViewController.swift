@@ -84,13 +84,13 @@ class GameViewController: GLKViewController {
             return
         }
         
-        let bmpFilePath = Bundle.main.path(forResource: "dice", ofType: "bmp")!
+        let bmpFilePath = Bundle.main.path(forResource: "body", ofType: "bmp")!
         textureBuffer = self.loadBMP(bmpFilePath)
         if textureBuffer == 0 {
             print("failer textures")
             return
         }
-        let modelFilePath = Bundle.main.path(forResource: "cube", ofType: "obj")!
+        let modelFilePath = Bundle.main.path(forResource: "miku", ofType: "obj")!
         if !model.loadObj(file: modelFilePath) {
             print("failer model")
             return
@@ -186,7 +186,8 @@ class GameViewController: GLKViewController {
         })
         
         // 三角形を描きます！
-        glDrawArrays(GLenum(GL_TRIANGLES), 0, 12*3); // 頂点0から始まります。合計3つの頂点で１つの三角形です。
+        let size = GLsizei(model.vertices.count / 3)
+        glDrawArrays(GLenum(GL_TRIANGLES), 0, size); // 頂点0から始まります。合計3つの頂点で１つの三角形です。
         
         glDisableVertexAttribArray(0)
     }
@@ -385,6 +386,13 @@ class GameViewController: GLKViewController {
             var body = [UInt8](repeating:0, count: imageSize)
             binaryData.copyBytes(to: &body, from: 54..<54+imageSize)
             
+            // BMPはBGRの順になっているのでRGBにする
+            for i in 0..<body.count-2 {
+                let tmp = body[i]
+                body[i] = body[i+2]
+                body[i+2] = tmp
+            }
+            
             // ひとつのOpenGLテクスチャを作ります。
             var texture: GLuint = 0
             glGenTextures(1, &texture)
@@ -393,7 +401,6 @@ class GameViewController: GLKViewController {
             glBindTexture(GLenum(GL_TEXTURE_2D), texture)
             
             // OpenGLに画像を渡します。
-            // BMPの並びはBGRのため、本来引数７にはGL_BGRを渡す必要があるがES3ではないっぽい
             glTexImage2D(GLenum(GL_TEXTURE_2D), 0, GL_RGB, Int32(width), Int32(height), 0, GLenum(GL_RGB), GLenum(GL_UNSIGNED_BYTE), body)
             
             // 画像を拡大(MAGnifying)するときは線形(LINEAR)フィルタリングを使います。
