@@ -18,6 +18,7 @@ class GameViewController: GLKViewController {
     var program: GLuint = 0
     
     var camera: Camera = Camera()
+    var model: Model = Model()
 
     var modelViewProjectionMatrix: GLKMatrix4 = GLKMatrix4Identity
     var normalMatrix: GLKMatrix3 = GLKMatrix3Identity
@@ -89,6 +90,11 @@ class GameViewController: GLKViewController {
             print("failer textures")
             return
         }
+        let modelFilePath = Bundle.main.path(forResource: "cube", ofType: "obj")!
+        if !model.loadObj(file: modelFilePath) {
+            print("failer model")
+            return
+        }
         
         // カメラのほうを向いていない法線の三角形をカリングします。
         glEnable(GLenum(GL_CULL_FACE))
@@ -110,12 +116,12 @@ class GameViewController: GLKViewController {
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), vertexBuffer)
         
         // 頂点をOpenGLに渡します。
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gQubeVertexData.count), &gQubeVertexData, GLenum(GL_STATIC_DRAW))
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * model.vertices.count), &model.vertices, GLenum(GL_STATIC_DRAW))
         
         // UVバッファも同様に作成
         glGenBuffers(1, &uvBuffer)
         glBindBuffer(GLenum(GL_ARRAY_BUFFER), uvBuffer)
-        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * gUVBufferData.count), &gUVBufferData, GLenum(GL_STATIC_DRAW))
+        glBufferData(GLenum(GL_ARRAY_BUFFER), GLsizeiptr(MemoryLayout<GLfloat>.size * model.uvs.count), &model.uvs, GLenum(GL_STATIC_DRAW))
     }
 
     func tearDownGL() {
@@ -206,7 +212,7 @@ class GameViewController: GLKViewController {
         let moveDistance: CGFloat = 0.2
         // ピンチ動作は、カメラからターゲットへの距離移動に使用する
         camera.distance = camera.distance - Float((sender.scale - 1.0) * moveDistance)
-        print("scale: \n\(sender.scale)")
+        //print("scale: \n\(sender.scale)")
     }
 
     // (mark): -  OpenGL ES 2 shader compilation
@@ -405,82 +411,3 @@ class GameViewController: GLKViewController {
         }
     }
 }
-
-var gQubeVertexData: [GLfloat] = [
-    -1.0, -1.0, -1.0, // 三角形1:開始
-    -1.0, -1.0, 1.0,
-    -1.0, 1.0, 1.0, // 三角形1:終了
-    1.0, 1.0, -1.0, // 三角形2:開始
-    -1.0, -1.0, -1.0,
-    -1.0, 1.0, -1.0, // 三角形2:終了
-    1.0, -1.0, 1.0,
-    -1.0, -1.0, -1.0,
-    1.0, -1.0, -1.0,
-    1.0, 1.0, -1.0,
-    1.0, -1.0, -1.0,
-    -1.0, -1.0, -1.0,
-    -1.0, -1.0, -1.0,
-    -1.0, 1.0, 1.0,
-    -1.0, 1.0, -1.0,
-    1.0, -1.0, 1.0,
-    -1.0, -1.0, 1.0,
-    -1.0, -1.0, -1.0,
-    -1.0, 1.0, 1.0,
-    -1.0, -1.0, 1.0,
-    1.0, -1.0, 1.0,
-    1.0, 1.0, 1.0,
-    1.0, -1.0, -1.0,
-    1.0, 1.0, -1.0,
-    1.0, -1.0, -1.0,
-    1.0, 1.0, 1.0,
-    1.0, -1.0, 1.0,
-    1.0, 1.0, 1.0,
-    1.0, 1.0, -1.0,
-    -1.0, 1.0, -1.0,
-    1.0, 1.0, 1.0,
-    -1.0, 1.0, -1.0,
-    -1.0, 1.0, 1.0,
-    1.0, 1.0, 1.0,
-    -1.0, 1.0, 1.0,
-    1.0, -1.0, 1.0
-]
-
-// UV
-var gUVBufferData: [GLfloat] = [
-    0.000059, 1.0-0.000004,
-    0.000103, 1.0-0.336048,
-    0.335973, 1.0-0.335903,
-    1.000023, 1.0-0.000013,
-    0.667979, 1.0-0.335851,
-    0.999958, 1.0-0.336064,
-    0.667979, 1.0-0.335851,
-    0.336024, 1.0-0.671877,
-    0.667969, 1.0-0.671889,
-    1.000023, 1.0-0.000013,
-    0.668104, 1.0-0.000013,
-    0.667979, 1.0-0.335851,
-    0.000059, 1.0-0.000004,
-    0.335973, 1.0-0.335903,
-    0.336098, 1.0-0.000071,
-    0.667979, 1.0-0.335851,
-    0.335973, 1.0-0.335903,
-    0.336024, 1.0-0.671877,
-    1.000004, 1.0-0.671847,
-    0.999958, 1.0-0.336064,
-    0.667979, 1.0-0.335851,
-    0.668104, 1.0-0.000013,
-    0.335973, 1.0-0.335903,
-    0.667979, 1.0-0.335851,
-    0.335973, 1.0-0.335903,
-    0.668104, 1.0-0.000013,
-    0.336098, 1.0-0.000071,
-    0.000103, 1.0-0.336048,
-    0.000004, 1.0-0.671870,
-    0.336024, 1.0-0.671877,
-    0.000103, 1.0-0.336048,
-    0.336024, 1.0-0.671877,
-    0.335973, 1.0-0.335903,
-    0.667969, 1.0-0.671889,
-    1.000004, 1.0-0.671847,
-    0.667979, 1.0-0.335851
-]

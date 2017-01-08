@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E41E70671E22614B00332D06 /* cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = E41E70661E22614B00332D06 /* cube.obj */; };
 		E458593F1E1A444800F82CCC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E458593E1E1A444800F82CCC /* AppDelegate.swift */; };
 		E45859411E1A444800F82CCC /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = E45859401E1A444800F82CCC /* Shader.fsh */; };
 		E45859431E1A444800F82CCC /* Shader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = E45859421E1A444800F82CCC /* Shader.vsh */; };
@@ -16,9 +17,11 @@
 		E458594D1E1A444800F82CCC /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E458594B1E1A444800F82CCC /* LaunchScreen.storyboard */; };
 		E4BF17DE1E1D1FDA004BFE59 /* dice.bmp in Resources */ = {isa = PBXBuildFile; fileRef = E4BF17DD1E1D1FDA004BFE59 /* dice.bmp */; };
 		E4BF17E01E2087B9004BFE59 /* Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4BF17DF1E2087B9004BFE59 /* Camera.swift */; };
+		E4BF17E21E2234E7004BFE59 /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4BF17E11E2234E7004BFE59 /* Model.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E41E70661E22614B00332D06 /* cube.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cube.obj; sourceTree = "<group>"; };
 		E458593B1E1A444800F82CCC /* swift-with-opengl.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "swift-with-opengl.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E458593E1E1A444800F82CCC /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E45859401E1A444800F82CCC /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; };
@@ -30,6 +33,7 @@
 		E458594E1E1A444800F82CCC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E4BF17DD1E1D1FDA004BFE59 /* dice.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = dice.bmp; sourceTree = "<group>"; };
 		E4BF17DF1E2087B9004BFE59 /* Camera.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Camera.swift; sourceTree = "<group>"; };
+		E4BF17E11E2234E7004BFE59 /* Model.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +76,8 @@
 				E458594B1E1A444800F82CCC /* LaunchScreen.storyboard */,
 				E458594E1E1A444800F82CCC /* Info.plist */,
 				E4BF17DF1E2087B9004BFE59 /* Camera.swift */,
+				E4BF17E11E2234E7004BFE59 /* Model.swift */,
+				E41E70661E22614B00332D06 /* cube.obj */,
 			);
 			path = "swift-with-opengl";
 			sourceTree = "<group>";
@@ -142,6 +148,7 @@
 				E458594A1E1A444800F82CCC /* Assets.xcassets in Resources */,
 				E458594D1E1A444800F82CCC /* LaunchScreen.storyboard in Resources */,
 				E45859411E1A444800F82CCC /* Shader.fsh in Resources */,
+				E41E70671E22614B00332D06 /* cube.obj in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -168,6 +175,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E4BF17E21E2234E7004BFE59 /* Model.swift in Sources */,
 				E4BF17E01E2087B9004BFE59 /* Camera.swift in Sources */,
 				E45859451E1A444800F82CCC /* GameViewController.swift in Sources */,
 				E458593F1E1A444800F82CCC /* AppDelegate.swift in Sources */,
